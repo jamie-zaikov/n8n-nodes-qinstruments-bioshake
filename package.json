@@ -1,0 +1,53 @@
+{
+  "name": "n8n-nodes-qinstruments-bioshake",
+  "version": "0.1.0",
+  "description": "n8n community node for the QInstruments BioShake instrument API.",
+  "license": "MIT",
+  "author": { "name": "Jamie Zaikov", "email": "jamie.zaikov@arcinstitute.org" },
+  "homepage": "https://github.com/jamie-zaikov/n8n-nodes-qinstruments-bioshake",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamie-zaikov/n8n-nodes-qinstruments-bioshake.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jamie-zaikov/n8n-nodes-qinstruments-bioshake/issues"
+  },
+  "keywords": [
+    "n8n-community-node-package"
+  ],
+  "main": "dist/nodes/QInstrumentsBioShake/QInstrumentsBioShake.node.js",
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/QInstrumentsBioShakeApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/QInstrumentsBioShake/QInstrumentsBioShake.node.js"
+    ]
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "build": "tsc --noEmit -p tsconfig.json && node build.mjs",
+    "test": "vitest run",
+    "prepublishOnly": "npm run lint && npm run build && npm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "^20.19.0",
+    "esbuild": "^0.28.2",
+    "eslint": "9.39.5",
+    "n8n-workflow": "~2.22.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0",
+    "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "n8n-workflow": ">=2.22.0 <3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

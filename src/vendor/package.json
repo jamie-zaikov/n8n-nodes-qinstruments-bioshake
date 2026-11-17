@@ -1,0 +1,5 @@
+{
+  "name": "n8n-node-core",
+  "version": "0.1.0",
+  "description": "Version manifest of the vendored n8n-node-core sources in n8n-node-core/ (index.test.ts reads it as ../package.json); the core is no package of its own and is inlined into the node bundle."
+}

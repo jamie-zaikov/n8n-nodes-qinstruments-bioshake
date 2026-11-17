@@ -1,0 +1,177 @@
+{
+  "name": "QInstruments BioShake - timed shake",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7a2d3b20-0001-4d4f-8b62-3c8e1f000001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "operation": "lockPlate",
+        "timeoutMs": 120000
+      },
+      "id": "7a2d3b20-0002-4d4f-8b62-3c8e1f000002",
+      "name": "Lock Plate",
+      "type": "n8n-nodes-qinstruments-bioshake.qInstrumentsBioShake",
+      "typeVersion": 1,
+      "position": [220, 300],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "qInstrumentsBioShakeApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "qinstruments-bioshake-lab"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "startShaking",
+        "rpm": 1200,
+        "shakeStartOptions": {},
+        "timeoutMs": 120000
+      },
+      "id": "7a2d3b20-0003-4d4f-8b62-3c8e1f000003",
+      "name": "Start Shaking",
+      "type": "n8n-nodes-qinstruments-bioshake.qInstrumentsBioShake",
+      "typeVersion": 1,
+      "position": [440, 240],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "qInstrumentsBioShakeApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "qinstruments-bioshake-lab"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "minutes"
+      },
+      "id": "7a2d3b20-0004-4d4f-8b62-3c8e1f000004",
+      "name": "Wait (shake duration)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [660, 180],
+      "onError": "continueErrorOutput",
+      "webhookId": "7a2d3b20-0201-4d4f-8b62-3c8e1f000201"
+    },
+    {
+      "parameters": {
+        "operation": "stopShaking",
+        "shakeStopOptions": {},
+        "timeoutMs": 120000
+      },
+      "id": "7a2d3b20-0005-4d4f-8b62-3c8e1f000005",
+      "name": "Stop Shaking",
+      "type": "n8n-nodes-qinstruments-bioshake.qInstrumentsBioShake",
+      "typeVersion": 1,
+      "position": [880, 120],
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "qInstrumentsBioShakeApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "qinstruments-bioshake-lab"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "7a2d3b20-0006-4d4f-8b62-3c8e1f000006",
+      "name": "Shake Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1100, 60]
+    },
+    {
+      "parameters": {
+        "operation": "stopAll",
+        "timeoutMs": 120000
+      },
+      "id": "7a2d3b20-0007-4d4f-8b62-3c8e1f000007",
+      "name": "Stop All",
+      "type": "n8n-nodes-qinstruments-bioshake.qInstrumentsBioShake",
+      "typeVersion": 1,
+      "position": [1100, 420],
+      "credentials": {
+        "qInstrumentsBioShakeApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "qinstruments-bioshake-lab"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "errorMessage": "The timed shake failed after Start Shaking was sent; Stop All was sent and answered. Read the error of the failed node before the next run."
+      },
+      "id": "7a2d3b20-0008-4d4f-8b62-3c8e1f000008",
+      "name": "Shake Aborted",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [1320, 420]
+    },
+    {
+      "parameters": {
+        "errorMessage": "Lock Plate failed, so shaking was not started. A 409 gate_refused means the shake state is not decoded as stopped (see the node README)."
+      },
+      "id": "7a2d3b20-0009-4d4f-8b62-3c8e1f000009",
+      "name": "Lock Failed",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [440, 480]
+    },
+    {
+      "parameters": {
+        "content": "## Timed shake\nLock Plate -> Start Shaking -> Wait (shake duration) -> Stop Shaking.\n\nThe node returns as soon as the API answers. The shake duration is the n8n Wait node, not the node.\n\nError branch: if Start Shaking, the Wait or Stop Shaking fails, the error output calls Stop All and then fails the execution. If Lock Plate fails, nothing was started, so the execution fails without a stop.\n\nRisk (OQ-4): if n8n itself stops between Start Shaking and Stop Shaking, the device keeps shaking until a stop arrives. Send Stop Shaking or Stop All by hand.\n\nDo not enable Continue On Fail on Stop All. Select your own QInstruments BioShake credential on every QInstruments BioShake node.",
+        "height": 340,
+        "width": 560
+      },
+      "id": "7a2d3b20-0010-4d4f-8b62-3c8e1f000010",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, -320]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Lock Plate", "type": "main", "index": 0 }]]
+    },
+    "Lock Plate": {
+      "main": [
+        [{ "node": "Start Shaking", "type": "main", "index": 0 }],
+        [{ "node": "Lock Failed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Start Shaking": {
+      "main": [
+        [{ "node": "Wait (shake duration)", "type": "main", "index": 0 }],
+        [{ "node": "Stop All", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait (shake duration)": {
+      "main": [
+        [{ "node": "Stop Shaking", "type": "main", "index": 0 }],
+        [{ "node": "Stop All", "type": "main", "index": 0 }]
+      ]
+    },
+    "Stop Shaking": {
+      "main": [
+        [{ "node": "Shake Done", "type": "main", "index": 0 }],
+        [{ "node": "Stop All", "type": "main", "index": 0 }]
+      ]
+    },
+    "Stop All": {
+      "main": [[{ "node": "Shake Aborted", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

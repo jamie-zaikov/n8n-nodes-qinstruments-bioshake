@@ -1,0 +1,85 @@
+name: Publish
+
+# Publishes the package to the public npm registry with build provenance.
+# n8n requires verified community nodes to be published from GitHub Actions with
+# provenance (a local `npm publish` is not accepted for verification). Provenance
+# is signed via GitHub's OIDC (`id-token: write` + `--provenance`) and works with
+# token auth, so this satisfies verification on the very first release.
+#
+# One-time setup before the first release:
+#   1. Create an account on npmjs.com.
+#   2. Create an access token with publish rights (Account → Access Tokens →
+#      Generate New Token → "Automation", or a Granular token scoped to publish).
+#   3. Add it to this repo as an Actions secret named NPM_TOKEN:
+#        gh secret set NPM_TOKEN --repo jamie-zaikov/n8n-nodes-qinstruments-bioshake
+#   4. Publish by pushing a version tag:
+#        git tag v0.1.0 && git push origin v0.1.0
+#
+# After the package exists on npm you may (optionally) migrate to npm Trusted
+# Publishing (OIDC, no stored token): configure a Trusted Publisher on the
+# package settings page (owner jamie-zaikov / repo n8n-nodes-qinstruments-bioshake
+# / workflow publish.yml), then drop NODE_AUTH_TOKEN from the publish step.
+# npm cannot bootstrap a brand-new package via OIDC, which is why the first
+# publish uses a token.
+on:
+  push:
+    tags: ['v*']
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # required for build provenance
+
+jobs:
+  publish:
+    name: publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Install (clean, from lockfile, no native builds)
+        id: npm-ci
+        run: npm ci --ignore-scripts
+
+      # Same gates as CI, before anything is published. `prepublishOnly`
+      # (lint + build + test) also runs on publish as a backstop.
+      - name: Lint
+        id: lint
+        run: npm run lint
+
+      - name: Build
+        id: build
+        run: npm run build
+
+      - name: Test
+        id: test
+        run: npm test
+
+      # Runs for both triggers: a tag push and a published release both carry the
+      # tag in GITHUB_REF. Any other ref fails here, before the publish step.
+      - name: Verify tag matches package version
+        id: tag-version
+        run: |
+          set -euo pipefail
+          case "${GITHUB_REF}" in
+            refs/tags/v*) ;;
+            *) echo "The ref ${GITHUB_REF} is not a v* tag" >&2; exit 1 ;;
+          esac
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag v$TAG does not match package.json version $PKG" >&2
+            exit 1
+          fi
+
+      - name: Publish (public, with provenance)
+        id: npm-publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

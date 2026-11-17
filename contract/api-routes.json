@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/v1/connect",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/v1/device-info",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/v1/elm/lock",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/v1/elm/state",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/v1/elm/unlock",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/v1/errors",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/v1/limits",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/v1/reacquire",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/v1/release",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/shake/acceleration",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/v1/shake/home",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/shake/speed",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/v1/shake/start",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/v1/shake/state",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/v1/shake/stop",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/v1/status",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/v1/stop-all",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/v1/temperature/actual",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/v1/temperature/at-target",
+      "query": [
+        "target_c",
+        "tolerance_c"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/v1/temperature/start",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/v1/temperature/stop",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/temperature/target",
+      "query": []
+    }
+  ]
+}

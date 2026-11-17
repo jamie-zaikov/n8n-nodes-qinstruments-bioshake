@@ -1,0 +1,26 @@
+{
+  // Type-check only (DD-8): esbuild (build.mjs) emits the CommonJS bundle, tsc emits nothing.
+  // `n8n-node-core` is mapped to its vendored TypeScript source in src/vendor/n8n-node-core/,
+  // so the type check and the bundle need no separate core build. The vendored index test reads
+  // its version manifest as a JSON module, hence resolveJsonModule.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "noEmit": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "n8n-node-core": ["./src/vendor/n8n-node-core/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

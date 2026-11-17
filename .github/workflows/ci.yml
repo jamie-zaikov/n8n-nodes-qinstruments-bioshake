@@ -1,0 +1,95 @@
+name: CI
+
+# Quality + security gates for the n8n community node package n8n-nodes-qinstruments-bioshake:
+# lint · build (type-check) · unit tests · dependency audit, plus a
+# working-tree/history secret scan.
+# Runs on every PR into main and on direct pushes to main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── lint · build (type-check) · unit tests · dep audit ──────────────────────
+  node:
+    name: node
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Node 22 matches the package's engines and n8n's runtime.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # The dev tools are installed at the exact versions of the committed lockfile.
+      # --ignore-scripts skips native postinstall builds, which lint, build and
+      # test never need.
+      - name: Install (clean, from lockfile, no native builds)
+        id: npm-ci
+        run: npm ci --ignore-scripts
+
+      - name: Lint (ESLint)
+        id: lint
+        run: npm run lint
+
+      - name: Build (TypeScript type-check)
+        id: build
+        run: npm run build
+
+      - name: Unit tests
+        id: test
+        run: npm test
+
+      # The published package ships no runtime dependencies (n8n-workflow is a
+      # peerDependency provided by the host n8n), so --omit=dev fails the build on
+      # any HIGH/CRITICAL advisory in what actually ships.
+      - name: Dependency vulnerability audit (production surface)
+        id: npm-audit
+        run: npm audit --omit=dev --audit-level=high
+
+  # ── Secret scanning across the working tree + history (gitleaks) ────────────
+  secret-scan:
+    name: secret-scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so historical commits are scanned too
+
+      - name: Download gitleaks 8.21.2
+        id: gitleaks-download
+        run: |
+          set -euo pipefail
+          curl -sSfL -o "${RUNNER_TEMP}/gitleaks.tar.gz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz"
+
+      # The archive must match the pinned SHA-256 before it is unpacked or run.
+      - name: Verify the gitleaks SHA-256
+        id: gitleaks-verify
+        run: |
+          set -euo pipefail
+          echo "5bc41815076e6ed6ef8fbecc9d9b75bcae31f39029ceb55da08086315316e3ba  ${RUNNER_TEMP}/gitleaks.tar.gz" | sha256sum --check --strict -
+          tar -xzf "${RUNNER_TEMP}/gitleaks.tar.gz" -C "${RUNNER_TEMP}" gitleaks
+
+      # Scan the checked-out tree; non-zero exit on any finding fails the job.
+      - name: Scan the working tree
+        id: gitleaks-dir
+        run: |
+          "${RUNNER_TEMP}/gitleaks" dir . --redact --no-banner --exit-code 1
+
+      # Also scan git history.
+      - name: Scan the git history
+        id: gitleaks-git
+        run: |
+          "${RUNNER_TEMP}/gitleaks" git . --redact --no-banner --exit-code 1

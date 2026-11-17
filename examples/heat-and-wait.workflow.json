@@ -1,0 +1,222 @@
+{
+  "name": "QInstruments BioShake - heat and wait",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "8b3e4c30-0001-4e50-9c73-4d9f2a000001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "operation": "setTargetTemperature",
+        "temperature_c": 37,
+        "timeoutMs": 120000
+      },
+      "id": "8b3e4c30-0002-4e50-9c73-4d9f2a000002",
+      "name": "Set Target Temperature",
+      "type": "n8n-nodes-qinstruments-bioshake.qInstrumentsBioShake",
+      "typeVersion": 1,
+      "position": [220, 300],
+      "credentials": {
+        "qInstrumentsBioShakeApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "qinstruments-bioshake-lab"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "startTemperatureControl",
+        "timeoutMs": 120000
+      },
+      "id": "8b3e4c30-0003-4e50-9c73-4d9f2a000003",
+      "name": "Start Temperature Control",
+      "type": "n8n-nodes-qinstruments-bioshake.qInstrumentsBioShake",
+      "typeVersion": 1,
+      "position": [440, 300],
+      "credentials": {
+        "qInstrumentsBioShakeApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "qinstruments-bioshake-lab"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "checkAtTarget",
+        "target_c": 37,
+        "atTargetOptions": {},
+        "timeoutMs": 120000
+      },
+      "id": "8b3e4c30-0004-4e50-9c73-4d9f2a000004",
+      "name": "Check At Target",
+      "type": "n8n-nodes-qinstruments-bioshake.qInstrumentsBioShake",
+      "typeVersion": 1,
+      "position": [660, 300],
+      "credentials": {
+        "qInstrumentsBioShakeApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "qinstruments-bioshake-lab"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "8b3e4c30-0101-4e50-9c73-4d9f2a000101",
+              "leftValue": "={{ $json.at_target }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8b3e4c30-0005-4e50-9c73-4d9f2a000005",
+      "name": "At Target?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {},
+      "id": "8b3e4c30-0006-4e50-9c73-4d9f2a000006",
+      "name": "Target Reached",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "8b3e4c30-0102-4e50-9c73-4d9f2a000102",
+              "leftValue": "={{ $runIndex }}",
+              "rightValue": 59,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8b3e4c30-0007-4e50-9c73-4d9f2a000007",
+      "name": "Below Iteration Cap?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1100, 420]
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "8b3e4c30-0008-4e50-9c73-4d9f2a000008",
+      "name": "Wait 30 s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1320, 360],
+      "webhookId": "8b3e4c30-0201-4e50-9c73-4d9f2a000201"
+    },
+    {
+      "parameters": {
+        "operation": "stopTemperatureControl",
+        "timeoutMs": 120000
+      },
+      "id": "8b3e4c30-0009-4e50-9c73-4d9f2a000009",
+      "name": "Stop Temperature Control",
+      "type": "n8n-nodes-qinstruments-bioshake.qInstrumentsBioShake",
+      "typeVersion": 1,
+      "position": [1320, 540],
+      "credentials": {
+        "qInstrumentsBioShakeApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "qinstruments-bioshake-lab"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "errorMessage": "The BioShake did not reach the target temperature within the iteration cap (60 checks, 30 s apart); temperature control was stopped."
+      },
+      "id": "8b3e4c30-0010-4e50-9c73-4d9f2a000010",
+      "name": "Stop and Error",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [1540, 540]
+    },
+    {
+      "parameters": {
+        "content": "## Heat and wait (temperature-poll pattern)\nSet Target Temperature -> Start Temperature Control -> loop: Check At Target -> IF at_target -> done; else Wait 30 s and check again.\n\nIteration cap: Below Iteration Cap? uses $runIndex (0-based) < 59, so at most 60 checks (about 30 minutes). When the cap is reached, temperature control is stopped and the execution fails.\n\nThe node has no wait or loop of its own; the n8n Wait node does the waiting. Keep Target (°C) of Check At Target equal to the Set Target Temperature value.\n\nDo not enable Continue On Fail on the stop node unless an IF node right after it checks json.error. Select your own QInstruments BioShake credential on every QInstruments BioShake node.",
+        "height": 320,
+        "width": 560
+      },
+      "id": "8b3e4c30-0011-4e50-9c73-4d9f2a000011",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, -20]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Set Target Temperature", "type": "main", "index": 0 }]]
+    },
+    "Set Target Temperature": {
+      "main": [[{ "node": "Start Temperature Control", "type": "main", "index": 0 }]]
+    },
+    "Start Temperature Control": {
+      "main": [[{ "node": "Check At Target", "type": "main", "index": 0 }]]
+    },
+    "Check At Target": {
+      "main": [[{ "node": "At Target?", "type": "main", "index": 0 }]]
+    },
+    "At Target?": {
+      "main": [
+        [{ "node": "Target Reached", "type": "main", "index": 0 }],
+        [{ "node": "Below Iteration Cap?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Below Iteration Cap?": {
+      "main": [
+        [{ "node": "Wait 30 s", "type": "main", "index": 0 }],
+        [{ "node": "Stop Temperature Control", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait 30 s": {
+      "main": [[{ "node": "Check At Target", "type": "main", "index": 0 }]]
+    },
+    "Stop Temperature Control": {
+      "main": [[{ "node": "Stop and Error", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
